@@ -4,7 +4,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.io.WritableComparable;
 
@@ -71,5 +73,28 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 				return 1;
 		}
 		return 0;
+	}
+
+	/**
+	 * Addition between a binary FeatureVector of indexes and this ClusterCenter vector
+	 * @param f FeatureVector to be added
+	 */
+	public void add(FeatureVector f) {
+		for(int index : f){
+			if(this.get(index)==null)
+				this.put(index, 1f);
+			else 
+				this.put(index,this.get(index)+1);
+		}
+	}
+
+	/**
+	 * Division between this VlusterCenter vector and a double 
+	 * @param count double precision denominator
+	 */
+	public void divide(double count) {
+		for(Entry<Integer,Float> e : this.entrySet()){
+			this.put(e.getKey(), (float) (e.getValue()/count));
+		}
 	}
 }

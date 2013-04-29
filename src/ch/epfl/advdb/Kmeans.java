@@ -13,6 +13,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import ch.epfl.advdb.io.*;
 
@@ -22,9 +25,26 @@ import ch.epfl.advdb.io.*;
  */
 public class Kmeans {
 	
-	public static double getDistance(FeatureVector v, ClusterCenter c){
-		//TODO
-		return 0;
+	/**
+	 * Distance function : uses cosine distance between cluster centers and features
+	 * @param v
+	 * @param c
+	 * @return
+	 */
+	public static float getDistance(FeatureVector v, ClusterCenter c){
+		float sum=0;
+		float nv = 0;
+		float nc=0;
+		for (int index : v){
+			if(c.get(index)!=null){
+				sum+=c.get(index);
+				nc+=c.get(index);
+			}
+			nv++;
+		}
+		if(nc==0||nv==0)
+			return 0;
+		else return sum/(nv*nc);
 	}
 	
 	/**
@@ -61,7 +81,7 @@ public class Kmeans {
 					//for each line
 					while (line != null)
 					{
-						int indexOfMean = Integer.valueOf(line.split(":")[0]);
+						int id = Integer.valueOf(line.split(":")[0]);
 						String[] keyValues = line.split(":")[1].split(";"); //get key-values
 						String kv[];
 						//iterate over the key values
@@ -69,9 +89,9 @@ public class Kmeans {
 						{
 							kv = e.split(",");
 							//populate centroids
-							if (clusterCentroids[indexOfMean]==null)
-									clusterCentroids[indexOfMean]=new ClusterCenter(keyValues.length);
-							clusterCentroids[indexOfMean].put(Integer.valueOf(kv[0]), 
+							if (clusterCentroids[id]==null)
+									clusterCentroids[id]=new ClusterCenter(keyValues.length);
+							clusterCentroids[id].put(Integer.valueOf(kv[0]), 
 									Float.parseFloat(kv[1]));
 						}
 						line = br.readLine();
@@ -91,21 +111,21 @@ public class Kmeans {
 		protected void map(Text key, FeatureVector value, Context context)
 				throws IOException, InterruptedException {
 			ClusterCenter nearest = null;
-			double nearestDistance = Double.MAX_VALUE;
-			double distance = 0;
-			for (ClusterCenter c : clusterCentroids)
+			float nearestDistance = Float.MAX_VALUE;
+			float distance = 0;
+			for (int i=0;i<clusterCentroids.length;++i)
 			{
-				distance = getDistance(value, c);
+				distance = getDistance(value, clusterCentroids[i]);
 				if(nearest==null)
 				{
-					nearest=c;
+					nearest=clusterCentroids[i];
 					nearestDistance=distance;
 				}
 				else
 				{
 					if (distance < nearestDistance)
 					{
-						nearest = c;
+						nearest = clusterCentroids[i];
 						nearestDistance=distance;
 					}
 				}
@@ -114,21 +134,54 @@ public class Kmeans {
 		}
 	}
 	
-	public static class KmeansReducer extends Reducer<ClusterCenter,FeatureVector,Text,Text>{
+	public static class KmeansReducer 
+			extends Reducer<ClusterCenter,FeatureVector,IntWritable,ClusterCenter>{
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
 		@Override
 		protected void reduce(ClusterCenter key, Iterable<FeatureVector> values, Context context)
 				throws IOException, InterruptedException {
-			
-
+			ClusterCenter newCentre = new ClusterCenter();
+			double count=0;
+			for(FeatureVector f : values){
+				newCentre.add(f);
+				count++;
+			}
+			newCentre.divide(count);
+			context.write(key, newCentre);
+			if (cent)
 		}
-		
 	}
 	
-	public int run(String[] args, int iteration){
+	public int run(String[] args, int iteration, final int REDUCERS) throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
 		//Save params
 		conf.set("CPATH", args[1]+"/"+"centroids"+iteration);
-		return 0;
+		
+		Job job = new Job(conf, "k-means-"+iteration);
+		//metrics
+		job.setNumReduceTasks(REDUCERS);
+		//Classes
+		job.setJarByClass(Kmeans.class);
+		job.setMapperClass(KmeansMapper.class);
+		//job.setCombinerClass(Reduce.class);
+		job.setReducerClass(KmeansReducer.class);
+		//mapOutput,reduceOutput
+		job.setMapOutputKeyClass(ClusterCenter.class);
+		job.setMapOutputValueClass(FeatureVector.class);
+		job.setOutputKeyClass(IntWritable.class);
+		job.setOutputValueClass(ClusterCenter.class);  
+
+		job.setInputFormatClass(TextInputFormat.class);
+		//job.setOutputFormatClass(NullOutputFormat.class);
+		//MultipleOutputs.addNamedOutput(job,"out", TextOutputFormat.class, Text.class, Text.class);
+
+		FileInputFormat.addInputPaths(job, args[1]+"/U_"+iteration+","+args[1]+"/M/M*");
+		FileOutputFormat.setOutputPath(job, new Path(args[1]+"/U_"+(iteration+1)));
+
+		return (job.waitForCompletion(true) ? 0 : 1);
 	}
 }
