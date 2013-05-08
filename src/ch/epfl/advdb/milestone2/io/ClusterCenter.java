@@ -1,16 +1,16 @@
-package ch.epfl.advdb.io;
+package ch.epfl.advdb.milestone2.io;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
-public class ClusterCenter extends HashMap<Integer,Float> implements
+public class ClusterCenter extends TreeMap<Integer,Double> implements
 		WritableComparable<ClusterCenter> {
 
 	/**
@@ -19,25 +19,29 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 	private static final long serialVersionUID = 2707896690769120709L;
 	
 	private int clusterID;
+	public ClusterCenter(){
+		super();
+	}
 	
 	public ClusterCenter(int clusterID) {
 		super();
 		this.clusterID=clusterID;
 	}
+	
 
-	public ClusterCenter(int initialCapacity, float loadFactor, int clusterID) {
-		super(initialCapacity, loadFactor);
-		this.clusterID=clusterID;
-	}
-
-	public ClusterCenter(int initialCapacity, int clusterID) {
-		super(initialCapacity);
-		this.clusterID=clusterID;
-	}
-
-	public ClusterCenter(Map<? extends Integer, ? extends Float> m, int clusterID) {
+	public ClusterCenter(Map<? extends Integer, ? extends Double> m, int clusterID) {
 		super(m);
 		this.clusterID=clusterID;
+	}
+
+	public ClusterCenter(Text value) {
+		String cc[] = value.toString().split(":")[1].split(";");
+		String[] keyValue;
+		for (String kv : cc){
+			keyValue = kv.split(",");
+			this.put(Integer.valueOf(keyValue[0]), Double.valueOf(keyValue[1]));
+		}
+		clusterID=Integer.valueOf(value.toString().split(":")[0]);
 	}
 
 	/*
@@ -51,7 +55,7 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 		this.clear();
 //		HashMap<Integer, Float> h = new HashMap<Integer, Float>(size);
 		for (int i=0;i<size;++i){
-			this.put(arg0.readInt(),arg0.readFloat());
+			this.put(arg0.readInt(),arg0.readDouble());
 		}
 	}
 
@@ -63,9 +67,9 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 	public void write(DataOutput arg0) throws IOException {
 		arg0.writeInt(size());
 		arg0.writeInt(clusterID);
-		for(java.util.Map.Entry<Integer, Float> e : this.entrySet()){
+		for(java.util.Map.Entry<Integer, Double> e : this.entrySet()){
 			arg0.writeInt(e.getKey());
-			arg0.writeFloat(e.getValue());
+			arg0.writeDouble(e.getValue());
 		}
 	}
 
@@ -76,12 +80,7 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 	@Override
 	public int compareTo(ClusterCenter o) {
 		//No absolute order for vectors, only look for equality
-		for (int i : this.keySet()) {
-			double c = this.get(i) - o.get(i);
-			if (c != 0.0f) 
-				return 1;
-		}
-		return 0;
+		return (this.toString().compareTo(o.toString()));
 	}
 	
 	
@@ -92,12 +91,15 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 	@Override
 	public String toString() {
 		String p=String.valueOf(clusterID)+":";
-		for (Entry<Integer, Float> e : this.entrySet()){
+		for (Entry<Integer, Double> e : this.entrySet()){
 			p+=e.getKey().toString()+","+e.getValue().toString()+";";
 		}
 		return p;
 	}
 	
+	/**
+	 * @return id of this ClusterCenter instance
+	 */
 	public int getClusterID(){
 		return clusterID;
 	}
@@ -109,9 +111,9 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 	public void add(FeatureVector f) {
 		for(int index : f){
 			if(this.get(index)==null)
-				this.put(index, 1f);
+				this.put(index, 1.0);
 			else 
-				this.put(index,this.get(index)+1);
+				this.put(index,this.get(index)+1.0);
 		}
 	}
 
@@ -120,8 +122,8 @@ public class ClusterCenter extends HashMap<Integer,Float> implements
 	 * @param count double precision denominator
 	 */
 	public void divide(double count) {
-		for(Entry<Integer,Float> e : this.entrySet()){
-			this.put(e.getKey(), (float) (e.getValue()/count));
+		for(Entry<Integer,Double> e : this.entrySet()){
+			this.put(e.getKey(), e.getValue()/count);
 		}
 	}
 	

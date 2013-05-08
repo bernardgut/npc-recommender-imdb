@@ -1,10 +1,12 @@
-package ch.epfl.advdb.io;
+package ch.epfl.advdb.milestone2.io;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 public class FeatureVector extends ArrayList<Integer> implements WritableComparable<FeatureVector> {
@@ -14,17 +16,33 @@ public class FeatureVector extends ArrayList<Integer> implements WritableCompara
 	 * 
 	 */
 	private static final long serialVersionUID = -3285319392520018214L;
-
+	
+	private int movieID;
+	
 	public FeatureVector() {
 		super();
 	}
-
-	public FeatureVector(Collection<? extends Integer> c) {
-		super(c);
+	public FeatureVector(int movieID) {
+		super();
+		this.movieID=movieID;
 	}
 
-	public FeatureVector(int initialCapacity) {
+	public FeatureVector(Collection<? extends Integer> c, int movieID) {
+		super(c);
+		this.movieID=movieID;
+	}
+
+	public FeatureVector(int initialCapacity, int movieID) {
 		super(initialCapacity);
+		this.movieID=movieID;
+	}
+
+	public FeatureVector(Text value) {
+		String cc[] = value.toString().split(",");
+		for (int i =1;i<cc.length;++i){
+			this.add(Integer.valueOf(cc[i]));
+		}
+		this.movieID=Integer.valueOf(cc[0]);
 	}
 
 	/*
@@ -46,9 +64,9 @@ public class FeatureVector extends ArrayList<Integer> implements WritableCompara
 	 */
 	@Override
 	public void write(DataOutput arg0) throws IOException {
-		arg0.write(this.size());
+		arg0.writeInt(this.size());
 		for(int i=0; i<this.size();++i){
-			arg0.write(this.get(i));
+			arg0.writeInt(this.get(i));
 		}
 	}
 
@@ -57,13 +75,21 @@ public class FeatureVector extends ArrayList<Integer> implements WritableCompara
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
-	public int compareTo(FeatureVector arg0) {
+	public int compareTo(FeatureVector o) {
 		//No absolute order for vectors, only look for equality
-		for (int i = 0; i < this.size(); i++) {
-			int c = this.get(i) - arg0.get(i);
-			if (c != 0) 
-				return 1;
-		}
-		return 0;
+		return (this.toString().compareTo(o.toString()));
 	}
+	/* (non-Javadoc)
+	 * @see java.util.AbstractCollection#toString()
+	 */
+	@Override
+	public String toString() {
+		String out=this.movieID+",";
+		for(int i=0;i<this.size();++i){
+			out+=this.get(i);
+		}
+		return out;
+	}
+	
+	
 }
