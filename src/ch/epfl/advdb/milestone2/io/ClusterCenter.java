@@ -108,12 +108,14 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 	 * Addition between a binary FeatureVector of indexes and this ClusterCenter vector
 	 * @param f FeatureVector to be added
 	 */
-	public void add(FeatureVector f) {
-		for(int index : f){
-			if(this.get(index)==null)
-				this.put(index, 1.0);
-			else 
-				this.put(index,this.get(index)+1.0);
+	public void add(FVector f) {
+		if(f instanceof FVectorIMDB){
+			for(int index : f){
+				if(this.get(index)==null)
+					this.put(index, 1.0);
+				else 
+					this.put(index,this.get(index)+1.0);
+			}
 		}
 	}
 

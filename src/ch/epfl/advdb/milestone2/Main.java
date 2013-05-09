@@ -21,13 +21,25 @@ public class Main {
 		System.out.println("######## SEEDS ########");		
 		if(KSeeds.run(args, K)==-1) printAndQuit("K-Seeds");
 		System.out.println("######## END SEEDS########");	
-		System.out.println("######## STARTING K MEANS ########");	
+		System.out.println("######## STARTING K MEANS IMDB ########");	
 		long convCount=0;
 		int i = 0;
 		while (convCount<K||i<10){
-			System.out.println("######## ITERATION "+i+" ########");	
-			convCount=KMeans.run(args, i, REDUCERS, K);
-			if(convCount==-1) printAndQuit("KMeans iteration "+i);
+			System.out.println("######## IMDB : ITERATION "+i+" ########");	
+			convCount=KMeans.runIMDB(args, i, REDUCERS, K);
+			if(convCount==-1) printAndQuit("KMeans imdb iteration "+i);
+			System.out.println("##### STATS for iteration "+i+" #####");
+			System.out.println("Converged centroids :"+convCount);
+			System.out.println("###################################");
+			++i;
+		}
+		System.out.println("######## V-Formatting ########");		
+		if(VFormating.run(args, REDUCERS)==-1) printAndQuit("K-Seeds");
+		System.out.println("######## STARTING K MEANS : NETFLIX ########");	
+		while (convCount<K||i<10){
+			System.out.println("######## NF ITERATION "+i+" ########");	
+			convCount=KMeans.runNetflix(args, i, REDUCERS, K);
+			if(convCount==-1) printAndQuit("KMeans netflix iteration "+i);
 			System.out.println("##### STATS for iteration "+i+" #####");
 			System.out.println("Converged centroids :"+convCount);
 			System.out.println("###################################");
