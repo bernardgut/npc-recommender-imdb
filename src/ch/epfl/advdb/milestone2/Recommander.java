@@ -101,7 +101,7 @@ public class Recommander {
 				for (int j = 0 ; j< U[0].length; ++j){
 					score+=c.get(j)*U[i][j];
 				}
-				if(score>=conf.getInt("T", 1))
+				if(score>conf.getInt("T", 0))
 //					users.add(i);
 					users+=i+",";
 			}
@@ -110,7 +110,8 @@ public class Recommander {
 	}
 	
 	public static int run(String[] args, final int REDUCERS, final int K, final int USERS, 
-			final int DIMENSIONS) throws IOException, ClassNotFoundException, InterruptedException {
+			final int DIMENSIONS, final int T) 
+			throws IOException, ClassNotFoundException, InterruptedException {
 		Configuration conf = new Configuration();
 		//Save params
 		conf.set("args[2]", args[2]);
@@ -118,6 +119,7 @@ public class Recommander {
 		conf.setInt("USERS", USERS);
 		conf.setInt("DIMENSIONS", DIMENSIONS);
 		conf.setInt("K", K);
+		conf.setInt("T", T);
 		conf.set("mapred.textoutputformat.separator", ",");
 		
 		Job job = new Job(conf, "Recommander");

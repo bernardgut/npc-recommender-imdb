@@ -66,31 +66,37 @@ public class FScore {
 			HashSet<Integer> relevantSet = new HashSet<Integer>();
 
 			for (Text t : arg1){
-				relevantSet.add(Integer.valueOf(t.toString().split(",")[0]));
+				String us[] = t.toString().split(",");
+				int user = Integer.valueOf(us[0]);
+				double score = Double.valueOf(us[1]);
+				if(score>context.getConfiguration().getInt("T", 0))
+					relevantSet.add(Integer.valueOf(us[0]));
 			}
 			System.out.println("FScore for movie "+arg0.get()+", result size : "+resultSet.size()
 					+", total relvant size : "+relevantSet.size());
 			
 			//intersection
+			int relevantSize = relevantSet.size();
 			relevantSet.retainAll(resultSet);
-			double n = relevantSet.size();
+			int n = relevantSet.size();	//intersection set size
 			//recall
-			double recall = n/relevantSet.size();
+			double recall = n/relevantSize;
 			//precision
 			double precision = n/resultSet.size();
 			//fscore
 			double fscore = 1/((1/recall)+(1/precision));
-			System.out.println("\tRecall:"+recall+" ; Precision:"+precision+" ; FScore:"+fscore);
+			System.out.println("\tn size "+n+" ; Recall:"+recall+" ; Precision: " +precision+" ; FScore: "+fscore);
 			context.write(arg0, new Text(recall+","+precision+","+fscore));
 		}
 	}
 
-	public static int run(String[] args, final int REDUCERS) 
+	public static int run(String[] args, final int REDUCERS, final int T) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		//set config
 		Configuration c = new Configuration();
 		c.set("CPATH", args[2]+"/recommander");
-
+		c.setInt("T", T);
+		
 		Job job = new Job(c, "FScore");
 		//metrics
 		job.setNumReduceTasks(REDUCERS);

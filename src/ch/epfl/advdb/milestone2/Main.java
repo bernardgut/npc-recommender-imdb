@@ -13,6 +13,7 @@ public class Main {
 	final static int REDUCERS = 2;
 	final static int USERS = 190152;
 	final static int DIMENSIONS = 10;
+	final static int T = 2;
 	/**
 	 * Main
 	 * @param args <input folder> <output folder> 
@@ -76,11 +77,11 @@ public class Main {
 		System.out.println("################## TEST ################");
 		
 		System.out.println("########## BUILD RECOMMANDATIONS ##########");
-		if(Recommander.run(args, REDUCERS, K, USERS, DIMENSIONS)==-1)
+		if(Recommander.run(args, REDUCERS, K, USERS, DIMENSIONS, T)==-1)
 			printAndQuit("Recommander");
 		
 		System.out.println("########## COMPUTE FSCORE ##########");	
-		if(FScore.run(args, REDUCERS)==-1)
+		if(FScore.run(args, REDUCERS, T)==-1)
 			printAndQuit("FScore");
 	}
 
