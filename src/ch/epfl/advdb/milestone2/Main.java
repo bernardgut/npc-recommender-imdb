@@ -11,20 +11,26 @@ package ch.epfl.advdb.milestone2;
 public class Main {
 	final static int K = 4;
 	final static int REDUCERS = 2;
+	final static int USERS = 190152;
+	final static int DIMENSIONS = 10;
 	/**
 	 * Main
 	 * @param args <input folder> <output folder> 
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		//INIT K-MEANS SEEDS
+		
+		//TRAIN PHASE
+		System.out.println("################## TRAIN ################");
+		int convCount=0;
+		int i = 0;
+		//KMEAN IMDB
 		System.out.println("######## SEEDS ########");		
-		if(KSeeds.run(args, K)==-1) printAndQuit("K-Seeds");
+		if(KSeeds.runRandom(args, K, "IMDB")==-1) 
+			printAndQuit("K-Seeds");
 		System.out.println("######## END SEEDS########");	
 		System.out.println("######## STARTING K MEANS IMDB ########");	
-		long convCount=0;
-		int i = 0;
-		while (convCount<K||i<10){
+		while (convCount<K && i<10){
 			System.out.println("######## IMDB : ITERATION "+i+" ########");	
 			convCount=KMeans.runIMDB(args, i, REDUCERS, K);
 			if(convCount==-1) printAndQuit("KMeans imdb iteration "+i);
@@ -33,10 +39,17 @@ public class Main {
 			System.out.println("###################################");
 			++i;
 		}
+		
+		convCount=0;
+		i=0;
+		//KMEAN NETFLIX
 		System.out.println("######## V-Formatting ########");		
 		if(VFormating.run(args, REDUCERS)==-1) printAndQuit("K-Seeds");
+		System.out.println("########## SEEDS ##########");		
+		if(KSeeds.runRandom(args, K, "Netflix")==-1) 
+			printAndQuit("K-Seeds");
 		System.out.println("######## STARTING K MEANS : NETFLIX ########");	
-		while (convCount<K||i<10){
+		while (convCount<K && i<10){
 			System.out.println("######## NF ITERATION "+i+" ########");	
 			convCount=KMeans.runNetflix(args, i, REDUCERS, K);
 			if(convCount==-1) printAndQuit("KMeans netflix iteration "+i);
@@ -45,6 +58,17 @@ public class Main {
 			System.out.println("###################################");
 			++i;
 		}
+		
+		//MAPPING
+		System.out.println("########## MAPPING ##########");		
+		if(Mapper.run(args, K)==-1) 
+			printAndQuit("Mapper");
+		System.out.println("########################################");
+		
+		//TEST PHASE
+		System.out.println("################## TEST ################");
+		if(Recommander.run(args, REDUCERS, K, USERS, DIMENSIONS)==-1)
+			printAndQuit("Recommander1");
 	}
 
 	private static void printAndQuit(String string) {

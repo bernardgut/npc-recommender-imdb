@@ -16,7 +16,7 @@ import org.apache.hadoop.io.WritableComparable;
  * @author mint05
  *
  */
-public abstract class FVector extends ArrayList<Integer> implements
+public abstract class FVector extends ArrayList<Float> implements
 		WritableComparable<FVector> {
 
 	/**
@@ -51,7 +51,7 @@ public abstract class FVector extends ArrayList<Integer> implements
 	/**
 	 * @param c
 	 */
-	public FVector(Collection<? extends Integer> c, int movieID) {
+	public FVector(Collection<? extends Float> c, int movieID) {
 		super(c);
 		this.movieID=movieID;
 	}
@@ -59,7 +59,7 @@ public abstract class FVector extends ArrayList<Integer> implements
 	public FVector(Text value){
 		String cc[] = value.toString().split(",");
 		for (int i =1;i<cc.length;++i){
-			this.add(Integer.valueOf(cc[i]));
+			this.add(Float.valueOf(cc[i]));
 		}
 		this.movieID=Integer.valueOf(cc[0]);
 	}
@@ -70,9 +70,10 @@ public abstract class FVector extends ArrayList<Integer> implements
 	@Override
 	public void readFields(DataInput arg0) throws IOException {
 		int size = arg0.readInt();
+		this.movieID=arg0.readInt();
 		this.ensureCapacity(size);
 		for (int i=0;i<size;++i){
-			this.add(arg0.readInt());
+			this.add(arg0.readFloat());
 		}
 	}
 
@@ -82,8 +83,9 @@ public abstract class FVector extends ArrayList<Integer> implements
 	@Override
 	public void write(DataOutput arg0) throws IOException {
 		arg0.writeInt(this.size());
+		arg0.writeInt(this.movieID);
 		for(int i=0; i<this.size();++i){
-			arg0.writeInt(this.get(i));
+			arg0.writeFloat(this.get(i));
 		}
 	}
 
@@ -108,11 +110,15 @@ public abstract class FVector extends ArrayList<Integer> implements
 		return out;
 	}
 	
+	public int getId(){
+		return this.movieID;
+	}
+	
 	/**
 	 * Distance function : uses cosine similarity between a clusterCenter vector and this feature
 	 * @param c
 	 * @return
 	 */
-	abstract public double getDistance(ClusterCenter c);
+	abstract public float getDistance(ClusterCenter c);
 	
 }

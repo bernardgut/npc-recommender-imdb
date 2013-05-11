@@ -10,7 +10,7 @@ import java.util.TreeMap;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
-public class ClusterCenter extends TreeMap<Integer,Double> implements
+public class ClusterCenter extends TreeMap<Integer,Float> implements
 		WritableComparable<ClusterCenter> {
 
 	/**
@@ -29,7 +29,7 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 	}
 	
 
-	public ClusterCenter(Map<? extends Integer, ? extends Double> m, int clusterID) {
+	public ClusterCenter(Map<? extends Integer, ? extends Float> m, int clusterID) {
 		super(m);
 		this.clusterID=clusterID;
 	}
@@ -39,7 +39,7 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 		String[] keyValue;
 		for (String kv : cc){
 			keyValue = kv.split(",");
-			this.put(Integer.valueOf(keyValue[0]), Double.valueOf(keyValue[1]));
+			this.put(Integer.valueOf(keyValue[0]), Float.valueOf(keyValue[1]));
 		}
 		clusterID=Integer.valueOf(value.toString().split(":")[0]);
 	}
@@ -55,7 +55,7 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 		this.clear();
 //		HashMap<Integer, Float> h = new HashMap<Integer, Float>(size);
 		for (int i=0;i<size;++i){
-			this.put(arg0.readInt(),arg0.readDouble());
+			this.put(arg0.readInt(),arg0.readFloat());
 		}
 	}
 
@@ -67,9 +67,9 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 	public void write(DataOutput arg0) throws IOException {
 		arg0.writeInt(size());
 		arg0.writeInt(clusterID);
-		for(java.util.Map.Entry<Integer, Double> e : this.entrySet()){
+		for(java.util.Map.Entry<Integer, Float> e : this.entrySet()){
 			arg0.writeInt(e.getKey());
-			arg0.writeDouble(e.getValue());
+			arg0.writeFloat(e.getValue());
 		}
 	}
 
@@ -91,7 +91,7 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 	@Override
 	public String toString() {
 		String p=String.valueOf(clusterID)+":";
-		for (Entry<Integer, Double> e : this.entrySet()){
+		for (Entry<Integer, Float> e : this.entrySet()){
 			p+=e.getKey().toString()+","+e.getValue().toString()+";";
 		}
 		return p;
@@ -107,24 +107,34 @@ public class ClusterCenter extends TreeMap<Integer,Double> implements
 	/**
 	 * Addition between a binary FeatureVector of indexes and this ClusterCenter vector
 	 * @param f FeatureVector to be added
+	 * @throws IOException 
 	 */
-	public void add(FVector f) {
+	public void add(FVector f) throws IOException {
 		if(f instanceof FVectorIMDB){
-			for(int index : f){
-				if(this.get(index)==null)
-					this.put(index, 1.0);
+			for(float index : f){
+				if(this.get((int)index)==null)
+					this.put((int)index, 1f);
 				else 
-					this.put(index,this.get(index)+1.0);
+					this.put((int)index,this.get((int)index)+1f);
 			}
 		}
+		else if (f instanceof FVectorNetflix){
+			for (int i=0;i<f.size();++i){	//10
+				if(this.get(i)==null)
+					this.put(i, f.get(i));
+				else
+					this.put(i, this.get(i)+f.get(i));
+			}
+		}
+		else throw new IOException("Invalid FVector subclass.");
 	}
 
 	/**
-	 * Division between this VlusterCenter vector and a double 
-	 * @param count double precision denominator
+	 * Division between this VlusterCenter vector and a float 
+	 * @param count float precision denominator
 	 */
-	public void divide(double count) {
-		for(Entry<Integer,Double> e : this.entrySet()){
+	public void divide(float count) {
+		for(Entry<Integer,Float> e : this.entrySet()){
 			this.put(e.getKey(), e.getValue()/count);
 		}
 	}

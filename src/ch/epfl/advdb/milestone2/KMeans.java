@@ -4,25 +4,30 @@
 package ch.epfl.advdb.milestone2;
 
 import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import ch.epfl.advdb.milestone2.io.*;
+import ch.epfl.advdb.milestone2.io.ClusterCenter;
+import ch.epfl.advdb.milestone2.io.FVector;
+import ch.epfl.advdb.milestone2.io.FVectorIMDB;
+import ch.epfl.advdb.milestone2.io.FVectorNetflix;
+import ch.epfl.advdb.milestone2.io.Fetchers;
 
 /**
  * @author Bernard Gütermann
  *
  */
-public class KMeans {
-
-	public static enum KMEANS {
-		CONVERGED
-	};
+public class KMeans{
 	
 	/**
 	 * Map : For a given feature vector, Find closest centroid 
@@ -34,19 +39,11 @@ public class KMeans {
 		ClusterCenter[] clusterCentroids;
 
 		@Override
-		protected void cleanup(Context context)
-				throws IOException, InterruptedException {
-			// TODO Auto-generated method stub
-			super.cleanup(context);
-		}
-
-		@Override
 		protected void setup(Context context)
 				throws IOException, InterruptedException {
 			clusterCentroids = Fetchers.fetchCenters(context.getConfiguration());
 			super.setup(context);
 		}
-
 
 		/*
 		 * (non-Javadoc)
@@ -60,24 +57,20 @@ public class KMeans {
 			if (t.equals("IMDB")){
 				v = new FVectorIMDB(value);
 			}else if (t.equals("Netflix")){
-				v = null;
+				v = new FVectorNetflix(value);
 			}else throw new InterruptedException("Invalid TYPE specification in configuration");
 			
 			ClusterCenter nearest = null;
-			double nearestDistance = Float.MAX_VALUE;
-			double distance = 0;
-			for (ClusterCenter c : clusterCentroids)
-			{
+			float nearestDistance = Float.MAX_VALUE;
+			float distance = 0;
+			for (ClusterCenter c : clusterCentroids){
 				distance = v.getDistance(c);
-				if(nearest==null)
-				{
+				if(nearest==null){
 					nearest=c;
 					nearestDistance=distance;
 				}
-				else
-				{
-					if (distance < nearestDistance)
-					{
+				else{
+					if (distance < nearestDistance){
 						nearest = c;
 						nearestDistance=distance;
 					}
@@ -87,7 +80,7 @@ public class KMeans {
 		}
 	}
 
-	public static class KmeansReducer extends Reducer<ClusterCenter,FVector,ClusterCenter, NullWritable>{
+	public static class KmeansReducer extends Reducer<ClusterCenter,FVector,ClusterCenter, Text>{
 
 		/*
 		 * (non-Javadoc)
@@ -97,79 +90,87 @@ public class KMeans {
 		protected void reduce(ClusterCenter key, Iterable<FVector> values, Context context)
 				throws IOException, InterruptedException {
 			ClusterCenter newCentre = new ClusterCenter(key.getClusterID());
-			double count=0;
+			float count=0;
+			String movieIds="";
 			for(FVector f : values){
 				newCentre.add(f);
 				count++;
+				movieIds+=f.getId()+",";
+				//TODO prevent deserialisation issue of FVector  (Hadoop 0.21 - unstable)
+				f.clear();//https://issues.apache.org/jira/browse/HADOOP-5454
 			}
 			newCentre.divide(count);
-			context.write(newCentre, null);
+			context.write(newCentre, new Text(movieIds));
+			//Test for convergence criteria
 			if (key.equals(newCentre)){
 				context.getCounter(KMEANS.CONVERGED).increment(1);
 			}
 		}
 	}
 
-	public static long runIMDB(String[] args, int iteration, final int REDUCERS, final int K) 
+	public static int runIMDB(String[] args, int iteration, final int REDUCERS, final int K) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
 		//Save params
-		conf.set("CPATH", args[2]+"/"+"clusterIMDB"+iteration);
+		conf.set("CPATH", args[2]+"/clusterIMDB"+iteration);
 		conf.setInt("K", K);
 		conf.set("TYPE", "IMDB");
+		conf.set("mapred.textoutputformat.separator", "!");
+		conf.set("key.value.separator.in.input.line", "!");
+		
 		Job job = new Job(conf, "k-Means-IMDB"+iteration);
 		//metrics
 		job.setNumReduceTasks(REDUCERS);
 		//Classes
 		job.setJarByClass(KMeans.class);
 		job.setMapperClass(KmeansMapper.class);
-		//job.setCombinerClass(Reduce.class);
 		job.setReducerClass(KmeansReducer.class);
 		//mapOutput,reduceOutput
 		job.setMapOutputKeyClass(ClusterCenter.class);
 		job.setMapOutputValueClass(FVectorIMDB.class);
 		job.setOutputKeyClass(ClusterCenter.class);
-		job.setOutputValueClass(NullWritable.class);  
-
+		job.setOutputValueClass(Text.class);  
 		job.setInputFormatClass(TextInputFormat.class);
-		//job.setOutputFormatClass(NullOutputFormat.class);
-		//MultipleOutputs.addNamedOutput(job,"out", TextOutputFormat.class, Text.class, Text.class);
-
+		//IO
 		FileInputFormat.addInputPaths(job, args[0]+"/features");
 		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/clusterIMDB"+(iteration+1)));
+		//save the number of iterations
+		Counters.ITERATIONS_IMDB++;
 		//return number of converged centers
 		return (job.waitForCompletion(true) ? 
-				job.getCounters().findCounter(KMEANS.CONVERGED).getValue() : -1);
+				(int)job.getCounters().findCounter(KMEANS.CONVERGED).getValue() : -1);
 	}
 	
-	public static long runNetflix(String[] args, int iteration, final int REDUCERS, final int K) 
+	public static int runNetflix(String[] args, int iteration, final int REDUCERS, final int K) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
 		//Save params
-		conf.set("CPATH", args[2]+"/"+"clusterNetflix"+iteration);
+		conf.set("CPATH", args[2]+"/clusterNetflix"+iteration);
 		conf.setInt("K", K);
+		conf.set("TYPE", "Netflix");
+		conf.set("mapred.textoutputformat.separator", "!");
+		conf.set("key.value.separator.in.input.line", "!");
+		
 		Job job = new Job(conf, "kMeans-Netflix-"+iteration);
 		//metrics
 		job.setNumReduceTasks(REDUCERS);
 		//Classes
 		job.setJarByClass(KMeans.class);
 		job.setMapperClass(KmeansMapper.class);
-		//job.setCombinerClass(Reduce.class);
 		job.setReducerClass(KmeansReducer.class);
 		//mapOutput,reduceOutput
 		job.setMapOutputKeyClass(ClusterCenter.class);
 		job.setMapOutputValueClass(FVectorNetflix.class);
 		job.setOutputKeyClass(ClusterCenter.class);
-		job.setOutputValueClass(NullWritable.class);  
-
+		job.setOutputValueClass(Text.class);  
 		job.setInputFormatClass(TextInputFormat.class);
-		//job.setOutputFormatClass(NullOutputFormat.class);
-		//MultipleOutputs.addNamedOutput(job,"out", TextOutputFormat.class, Text.class, Text.class);
-
+		//IO
 		FileInputFormat.addInputPaths(job, args[0]+"/V0");
 		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/clusterNetflix"+(iteration+1)));
+		//save the number of iterations
+		Counters.ITERATIONS_NETFLIX++;
 		//return number of converged centers
 		return (job.waitForCompletion(true) ? 
-				job.getCounters().findCounter(KMEANS.CONVERGED).getValue() : -1);
+				(int)job.getCounters().findCounter(KMEANS.CONVERGED).getValue() : -1);
 	}
 }

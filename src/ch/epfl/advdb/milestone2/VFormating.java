@@ -41,9 +41,15 @@ public class VFormating {
 		protected void reduce(IntWritable arg0, Iterable<Text> arg1, Context arg2)
 				throws IOException, InterruptedException {
 			String line=arg0.toString()+",";
-			for(Iterator<Text> it = arg1.iterator(); it.hasNext();){
-				line+=it.toString().split(",")[1]+",";
+			Iterator<Text> it = arg1.iterator();
+			String[] v = new String[10];
+			String[] kv;
+			while(it.hasNext()){
+				kv=it.next().toString().split(",");
+				v[Integer.valueOf(kv[0])-1]=kv[1];
 			}
+			for(int i = 0; i<v.length;++i)
+				line+=v[i]+",";
 			arg2.write(new Text(line), null);
 		}
 	}

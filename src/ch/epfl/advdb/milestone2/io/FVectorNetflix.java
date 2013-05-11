@@ -43,7 +43,7 @@ public class FVectorNetflix extends FVector {
 	 * @param c
 	 * @param movieID
 	 */
-	public FVectorNetflix(Collection<? extends Integer> c, int movieID) {
+	public FVectorNetflix(Collection<? extends Float> c, int movieID) {
 		super(c, movieID);
 	}
 
@@ -58,11 +58,11 @@ public class FVectorNetflix extends FVector {
 	 * @see ch.epfl.advdb.milestone2.io.FVector#getDistance(ch.epfl.advdb.milestone2.io.ClusterCenter)
 	 */
 	@Override
-	public double getDistance(ClusterCenter c) {
-		double sum=0;
-		double nv = 0;
-		double nc=0;
-		double a, b;
+	public float getDistance(ClusterCenter c) {
+		float sum=0;
+		float nv = 0;
+		float nc=0;
+		float a, b;
 		//iterate over the 10 values
 		for (int i = 0; i<this.size();++i){
 			a = this.get(i);
@@ -76,6 +76,6 @@ public class FVectorNetflix extends FVector {
 		//sum Bi squared
 		if(nc==0||nv==0)
 			return 0;
-		else return 1-(sum/(Math.sqrt(nv)*Math.sqrt(nc)));
+		else return (float) (1-(sum/(Math.sqrt(nv)*Math.sqrt(nc))));
 	}
 }
