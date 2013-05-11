@@ -29,46 +29,59 @@ public class Main {
 		if(KSeeds.runRandom(args, K, "IMDB")==-1) 
 			printAndQuit("K-Seeds");
 		System.out.println("######## END SEEDS########");	
+		
 		System.out.println("######## STARTING K MEANS IMDB ########");	
 		while (convCount<K && i<10){
 			System.out.println("######## IMDB : ITERATION "+i+" ########");	
 			convCount=KMeans.runIMDB(args, i, REDUCERS, K);
 			if(convCount==-1) printAndQuit("KMeans imdb iteration "+i);
+			
 			System.out.println("##### STATS for iteration "+i+" #####");
 			System.out.println("Converged centroids :"+convCount);
 			System.out.println("###################################");
 			++i;
 		}
-		
+		System.out.println("######## END K MEANS IMDB ########");	
+
+		//KMEAN NETFLIX
 		convCount=0;
 		i=0;
-		//KMEAN NETFLIX
 		System.out.println("######## V-Formatting ########");		
 		if(VFormating.run(args, REDUCERS)==-1) printAndQuit("K-Seeds");
+		
 		System.out.println("########## SEEDS ##########");		
 		if(KSeeds.runRandom(args, K, "Netflix")==-1) 
 			printAndQuit("K-Seeds");
+		
 		System.out.println("######## STARTING K MEANS : NETFLIX ########");	
 		while (convCount<K && i<10){
 			System.out.println("######## NF ITERATION "+i+" ########");	
 			convCount=KMeans.runNetflix(args, i, REDUCERS, K);
 			if(convCount==-1) printAndQuit("KMeans netflix iteration "+i);
+			
 			System.out.println("##### STATS for iteration "+i+" #####");
 			System.out.println("Converged centroids :"+convCount);
 			System.out.println("###################################");
 			++i;
 		}
+		System.out.println("######## END K MEANS NETFLIX ########");
 		
 		//MAPPING
 		System.out.println("########## MAPPING ##########");		
-		if(Mapper.run(args, K)==-1) 
+		if(Maping.run(args, K)==-1) 
 			printAndQuit("Mapper");
 		System.out.println("########################################");
 		
 		//TEST PHASE
 		System.out.println("################## TEST ################");
+		
+		System.out.println("########## BUILD RECOMMANDATIONS ##########");
 		if(Recommander.run(args, REDUCERS, K, USERS, DIMENSIONS)==-1)
-			printAndQuit("Recommander1");
+			printAndQuit("Recommander");
+		
+		System.out.println("########## COMPUTE FSCORE ##########");	
+		if(FScore.run(args, REDUCERS)==-1)
+			printAndQuit("FScore");
 	}
 
 	private static void printAndQuit(String string) {
@@ -76,5 +89,4 @@ public class Main {
 		System.exit(1);
 		
 	}
-	
 }	

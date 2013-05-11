@@ -9,7 +9,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.Counters.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -17,6 +16,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import ch.epfl.advdb.milestone2.counters.GLOBAL_COUNTERS;
+import ch.epfl.advdb.milestone2.counters.KMEANS_COUNTERS;
 import ch.epfl.advdb.milestone2.io.ClusterCenter;
 import ch.epfl.advdb.milestone2.io.FVector;
 import ch.epfl.advdb.milestone2.io.FVectorIMDB;
@@ -103,7 +104,7 @@ public class KMeans{
 			context.write(newCentre, new Text(movieIds));
 			//Test for convergence criteria
 			if (key.equals(newCentre)){
-				context.getCounter(KMEANS.CONVERGED).increment(1);
+				context.getCounter(KMEANS_COUNTERS.CONVERGED).increment(1);
 			}
 		}
 	}
@@ -135,10 +136,10 @@ public class KMeans{
 		FileInputFormat.addInputPaths(job, args[0]+"/features");
 		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/clusterIMDB"+(iteration+1)));
 		//save the number of iterations
-		Counters.ITERATIONS_IMDB++;
+		GLOBAL_COUNTERS.ITERATIONS_IMDB++;
 		//return number of converged centers
 		return (job.waitForCompletion(true) ? 
-				(int)job.getCounters().findCounter(KMEANS.CONVERGED).getValue() : -1);
+				(int)job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
 	}
 	
 	public static int runNetflix(String[] args, int iteration, final int REDUCERS, final int K) 
@@ -168,9 +169,9 @@ public class KMeans{
 		FileInputFormat.addInputPaths(job, args[0]+"/V0");
 		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/clusterNetflix"+(iteration+1)));
 		//save the number of iterations
-		Counters.ITERATIONS_NETFLIX++;
+		GLOBAL_COUNTERS.ITERATIONS_NETFLIX++;
 		//return number of converged centers
 		return (job.waitForCompletion(true) ? 
-				(int)job.getCounters().findCounter(KMEANS.CONVERGED).getValue() : -1);
+				(int)job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
 	}
 }

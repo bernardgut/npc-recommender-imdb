@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.HashSet;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -154,5 +156,35 @@ public class Fetchers {
 		}
 		//fs.close();
 		return matrix;
+	}
+
+	public static HashMap<Integer, HashSet<Integer>> fetchResults(
+			Configuration c) throws IOException {
+		HashMap<Integer, HashSet<Integer>>  out = new HashMap<Integer, HashSet<Integer>> ();
+		FileSystem fs = FileSystem.get(c);
+		FileStatus[] status = fs.listStatus(new Path(c.get("CPATH")));  
+		//For each correponding file
+		assert (status.length!=0) : "fetchMappings : Invalid CPATH";
+		for (int i=0;i<status.length;i++)
+		{
+			String fileName[] = status[i].getPath().toString().split("/");
+			if (fileName[fileName.length-1].contains("part")) {
+				BufferedReader br=new BufferedReader(
+						new InputStreamReader(fs.open(status[i].getPath())));
+				String line=br.readLine();
+				while (line != null)
+				{
+					String l[] = line.split(",");
+					HashSet<Integer> u = new HashSet<Integer>();
+					for (int j = 1; j< l.length; ++j){
+						u.add(Integer.valueOf(l[j]));
+					}
+					out.put(Integer.valueOf(l[0]), u);
+					line = br.readLine();
+				}
+				br.close();
+			}
+		}
+		return out;
 	}
 }

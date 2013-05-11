@@ -13,6 +13,11 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+/**
+ * 
+ * @author Bernard Gütermann
+ *
+ */
 public class KSeeds {
 	static String newLine = System.getProperty("line.separator"); 
 

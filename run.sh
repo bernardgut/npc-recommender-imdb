@@ -10,7 +10,7 @@ echo "Puting input..."
 hadoop dfs -put std11/input std11/input
 echo "*********************"
 echo "Compiling..."
-javac -cp lib/hadoop-mapred-0.21.0.jar:lib/hadoop-common-0.21.0.jar -source 1.6 -target 1.6 -d classes src/ch/epfl/advdb/milestone2/*.java src/ch/epfl/advdb/milestone2/io/*.java
+javac -cp lib/hadoop-mapred-0.21.0.jar:lib/hadoop-common-0.21.0.jar -source 1.6 -target 1.6 -d classes src/ch/epfl/advdb/milestone2/*.java src/ch/epfl/advdb/milestone2/io/*.java src/ch/epfl/advdb/milestone2/counters/*.java
 jar cvf milestone2.jar -C classes .
 echo "*********************"
 echo "Starting Hadoop task..."

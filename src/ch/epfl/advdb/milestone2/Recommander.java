@@ -15,6 +15,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import ch.epfl.advdb.milestone2.counters.GLOBAL_COUNTERS;
 import ch.epfl.advdb.milestone2.io.ClusterCenter;
 import ch.epfl.advdb.milestone2.io.FVectorIMDB;
 import ch.epfl.advdb.milestone2.io.Fetchers;
@@ -32,9 +33,9 @@ public class Recommander {
 		protected void setup(Context context) throws IOException,
 				InterruptedException {
 			Configuration c = context.getConfiguration();
-			c.set("CPATH", c.get("args[2]")+"/clusterIMDB"+Counters.ITERATIONS_IMDB);
+			c.set("CPATH", c.get("args[2]")+"/clusterIMDB"+GLOBAL_COUNTERS.ITERATIONS_IMDB);
 			clusterCentroidsIMDB = Fetchers.fetchCenters(c);
-			c.set("CPATH", c.get("args[2]")+"/clusterNetflix"+Counters.ITERATIONS_NETFLIX);
+			c.set("CPATH", c.get("args[2]")+"/clusterNetflix"+GLOBAL_COUNTERS.ITERATIONS_NETFLIX);
 			clusterCentroidsNetflix = Fetchers.fetchCenters(c);
 			c.set("CPATH", c.get("args[2]")+"/mapping");
 			mappings = Fetchers.fetchMappings(c); 
@@ -100,7 +101,7 @@ public class Recommander {
 				for (int j = 0 ; j< U[0].length; ++j){
 					score+=c.get(j)*U[i][j];
 				}
-				if(score>=conf.getInt("T", 0))
+				if(score>=conf.getInt("T", 1))
 //					users.add(i);
 					users+=i+",";
 			}
@@ -109,7 +110,7 @@ public class Recommander {
 	}
 	
 	public static int run(String[] args, final int REDUCERS, final int K, final int USERS, 
-			final int DIMENSIONS) throws IOException, ClassNotFoundException, InterruptedException{
+			final int DIMENSIONS) throws IOException, ClassNotFoundException, InterruptedException {
 		Configuration conf = new Configuration();
 		//Save params
 		conf.set("args[2]", args[2]);
@@ -135,7 +136,7 @@ public class Recommander {
 		//IO
 		FileInputFormat.addInputPaths(job, args[1]+"/features");
 		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/recommander"));
-		//return number of converged centers
+		
 		return (job.waitForCompletion(true) ? 0 : -1);
 	}
 }
