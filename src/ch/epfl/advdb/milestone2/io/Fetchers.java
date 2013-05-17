@@ -26,7 +26,8 @@ public class Fetchers {
 		FileSystem fs = FileSystem.get(c);
 		FileStatus[] status = fs.listStatus(new Path(c.get("CPATH")));  
 		//For each correponding file
-		assert (status.length!=0) : "fetchCenters : Invalid CPATH";
+		if(status.length==0) throw new IOException("Invalid CPATH :"+c.get("CPATH"));
+		int count = 0;
 		for (int i=0;i<status.length;i++)
 		{
 			String fileName[] = status[i].getPath().toString().split("/");
@@ -34,34 +35,27 @@ public class Fetchers {
 				BufferedReader br=new BufferedReader(
 						new InputStreamReader(fs.open(status[i].getPath())));
 				String line=br.readLine();
-				//for each line
 				while (line != null)
 				{
+					count++;
 					String[] l = line.split("!")[0].split(":");
 					int id = Integer.valueOf(l[0]);
-					if(l.length<=1){
-						//the 0 cluster centroid
-						if (clusterCentroids[id]==null)
-							clusterCentroids[id]=new ClusterCenter(id);
-					}else{
-						String[] keyValues = l[1].split(";"); //get key-values
-						String kv[];
-						//iterate over the key values
-						for (String e : keyValues)
-						{
-							kv = e.split(",");
-							//populate centroids
-							if (clusterCentroids[id]==null)
-								clusterCentroids[id]=new ClusterCenter(id);
-							clusterCentroids[id].put(Integer.valueOf(kv[0]), 
-									Float.parseFloat(kv[1]));
-						}
+					String[] keyValues = l[1].split(";"); //get key-values
+					String kv[];
+					//iterate over the key values
+					clusterCentroids[id]=new ClusterCenter(id);
+					for (String e : keyValues)
+					{
+						kv = e.split(",");
+						//populate centroids
+						clusterCentroids[id].put(Integer.valueOf(kv[0]), Float.parseFloat(kv[1]));
 					}
 					line = br.readLine();
 				}
 				br.close();
 			}
 		}
+		System.out.println("Centers Fetched : "+count );
 		return clusterCentroids;
 	}
 
@@ -97,7 +91,7 @@ public class Fetchers {
 						cs = new ClusterCenter(id);
 						cs.put(Integer.valueOf(kv[0]), Float.parseFloat(kv[1]));
 					}
-					
+
 					//CONSTRUCT PAIR
 					clusters[id]=new Pair<ClusterCenter, String>(cs,lr[1]);
 					line = br.readLine();
@@ -107,7 +101,7 @@ public class Fetchers {
 		}
 		return clusters;
 	}
-	
+
 	public static HashMap<Integer, Integer> fetchMappings(Configuration c) throws IOException {
 		HashMap<Integer, Integer> out = new HashMap<Integer,Integer>();
 		FileSystem fs = FileSystem.get(c);
@@ -132,7 +126,7 @@ public class Fetchers {
 		}
 		return out;
 	}
-	
+
 	public static double[][] fetchUMatrix(Configuration c) throws IOException{
 		double[][] matrix = new double[Integer.valueOf(c.get("USERS"))][Integer.valueOf(c.get("DIMENSIONS"))];
 		FileSystem fs = FileSystem.get(c);
@@ -186,5 +180,43 @@ public class Fetchers {
 			}
 		}
 		return out;
+	}
+
+	public static double fetchFScoreMean(String[] args){
+		double mean = 0;
+		double count = 0;
+		Path ip=new Path(args[2]+"/fscore");
+		Configuration c= new Configuration();
+		FileSystem fs;
+		FileStatus[] status;
+		try {
+			fs  = FileSystem.get(c);
+			status = fs.listStatus(ip);
+			//For each correponding file
+			for (int i=0;i<status.length;i++)
+			{
+				String fileName[] = status[i].getPath().toString().split("/");
+				if (fileName[fileName.length-1].contains("features")||
+						fileName[fileName.length-1].contains("part")) {
+					BufferedReader br=new BufferedReader(
+							new InputStreamReader(fs.open(status[i].getPath())));
+					String line=br.readLine();
+					//for each line
+					while (line != null)
+					{
+						String[] w = line.split(",");
+						mean+=Double.valueOf(w[w.length-1]);
+						count++;
+						line = br.readLine();
+					}
+					br.close();
+				}
+			}
+			return mean/count;
+		} catch (IOException e) {
+			System.err.println("KSeeds : unable to fetch features");
+			e.printStackTrace();
+			return -1;
+		}
 	}
 }

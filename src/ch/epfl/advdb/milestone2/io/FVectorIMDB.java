@@ -30,6 +30,10 @@ public class FVectorIMDB extends FVector{
 	public FVectorIMDB(Text value) {
 		super(value);
 	}
+	
+	public FVectorIMDB(String value){
+		super(value);
+	}
 
 	/* (non-Javadoc)
 	 * @see ch.epfl.advdb.milestone2.io.FVector#getDistance(ch.epfl.advdb.milestone2.io.ClusterCenter)
@@ -52,5 +56,27 @@ public class FVectorIMDB extends FVector{
 		if(nc==0||nv==0)
 			return 0;
 		else return (float) (1-(sum/(Math.sqrt(nv)*Math.sqrt(nc))));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ch.epfl.advdb.milestone2.io.FVector#getDistance(ch.epfl.advdb.milestone2.io.FVector)
+	 */
+	@Override
+	public float getDistance(FVector s) {
+		float sum=0;
+		float nv = 0;
+		float ns=0;
+		for (float index : this){
+			if (s.contains(index))
+				sum+=1;
+			nv++;
+		}
+		for (float ind : s){
+			ns++;
+		}
+		if(ns==0||nv==0)
+			return 0;
+		else return (float) (1-(sum/(Math.sqrt(nv)*Math.sqrt(ns))));
 	}
 }

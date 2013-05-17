@@ -9,5 +9,5 @@ package ch.epfl.advdb.milestone2.counters;
  *
  */
 public enum KMEANS_COUNTERS {
-	CONVERGED,
+	CONVERGED,	
 }

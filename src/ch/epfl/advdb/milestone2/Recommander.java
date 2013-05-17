@@ -94,7 +94,7 @@ public class Recommander {
 			//there is only one clustercenter per test movieID
 			ClusterCenter c = arg1.iterator().next();
 //			ArrayList<Integer> users = new ArrayList<Integer>();
-			String users="";
+			StringBuilder users= new StringBuilder();
 			//compute predicted score for all users
 			for (int i = 0; i<U.length; ++i){
 				double score = 0 ;
@@ -103,9 +103,9 @@ public class Recommander {
 				}
 				if(score>conf.getInt("T", 0))
 //					users.add(i);
-					users+=i+",";
+					users.append(i).append(",");
 			}
-			context.write(arg0, new Text(users));
+			context.write(arg0, new Text(users.toString()));
 		}
 	}
 	

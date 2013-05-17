@@ -40,7 +40,7 @@ public class VFormating {
 		@Override
 		protected void reduce(IntWritable arg0, Iterable<Text> arg1, Context arg2)
 				throws IOException, InterruptedException {
-			String line=arg0.toString()+",";
+			StringBuilder line=new StringBuilder(arg0.toString()+",");
 			Iterator<Text> it = arg1.iterator();
 			String[] v = new String[10];
 			String[] kv;
@@ -49,8 +49,8 @@ public class VFormating {
 				v[Integer.valueOf(kv[0])-1]=kv[1];
 			}
 			for(int i = 0; i<v.length;++i)
-				line+=v[i]+",";
-			arg2.write(new Text(line), null);
+				line.append(v[i]).append(",");
+			arg2.write(new Text(line.toString()), null);
 		}
 	}
 	
@@ -75,7 +75,7 @@ public class VFormating {
 		job.setInputFormatClass(TextInputFormat.class);
 
 		FileInputFormat.addInputPaths(job, args[0]+"/V");
-		FileOutputFormat.setOutputPath(job, new Path(args[0]+"/V0"));
+		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/V0"));
 		//return number of converged centers
 		return (job.waitForCompletion(true) ? 0 : -1);
 	}

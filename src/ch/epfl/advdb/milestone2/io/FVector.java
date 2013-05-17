@@ -64,6 +64,14 @@ public abstract class FVector extends ArrayList<Float> implements
 		this.movieID=Integer.valueOf(cc[0]);
 	}
 	
+	public FVector(String value){
+		String cc[] = value.split(",");
+		for (int i =1;i<cc.length;++i){
+			this.add(Float.valueOf(cc[i]));
+		}
+		this.movieID=Integer.valueOf(cc[0]);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
 	 */
@@ -103,11 +111,23 @@ public abstract class FVector extends ArrayList<Float> implements
 	 */
 	@Override
 	public String toString(){
-		String out=this.movieID+",";
+		StringBuilder out=new StringBuilder(this.movieID).append(",");
 		for(int i=0;i<this.size();++i){
-			out+=this.get(i)+",";
+			out.append(this.get(i)).append(",");
 		}
-		return out;
+		return out.toString();
+	}
+	
+	/**
+	 * return a string representation of this FVector without the movieID as first character
+	 * @return
+	 */
+	public String toStringWOid(){
+		StringBuilder out=new StringBuilder();
+		for(int i=0;i<this.size();++i){
+			out.append(this.get(i)).append(",");
+		}
+		return out.toString();
 	}
 	
 	public int getId(){
@@ -120,5 +140,12 @@ public abstract class FVector extends ArrayList<Float> implements
 	 * @return
 	 */
 	abstract public float getDistance(ClusterCenter c);
+
+	/**
+	 *  Distance function : uses cosine similarity between a two feature vectors
+	 * @param s
+	 * @return
+	 */
+	abstract public float getDistance(FVector s);
 	
 }

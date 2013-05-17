@@ -29,7 +29,7 @@ import ch.epfl.advdb.milestone2.io.Fetchers;
  *
  */
 public class KMeans{
-	
+
 	/**
 	 * Map : For a given feature vector, Find closest centroid 
 	 * @author mint05
@@ -60,19 +60,21 @@ public class KMeans{
 			}else if (t.equals("Netflix")){
 				v = new FVectorNetflix(value);
 			}else throw new InterruptedException("Invalid TYPE specification in configuration");
-			
+
 			ClusterCenter nearest = null;
 			float nearestDistance = Float.MAX_VALUE;
 			float distance = 0;
-			for (ClusterCenter c : clusterCentroids){
-				distance = v.getDistance(c);
+			for (int i = 0; i<context.getConfiguration().getInt("K", 0);++i){
+				if(clusterCentroids[i]==null)
+					throw new InterruptedException("MAP "+v.getId()+": Setup didnt load properly :"+i);
+				distance = v.getDistance(clusterCentroids[i]);
 				if(nearest==null){
-					nearest=c;
+					nearest=clusterCentroids[i];
 					nearestDistance=distance;
 				}
 				else{
 					if (distance < nearestDistance){
-						nearest = c;
+						nearest = clusterCentroids[i];
 						nearestDistance=distance;
 					}
 				}
@@ -90,26 +92,32 @@ public class KMeans{
 		@Override
 		protected void reduce(ClusterCenter key, Iterable<FVector> values, Context context)
 				throws IOException, InterruptedException {
-			ClusterCenter newCentre = new ClusterCenter(key.getClusterID());
+			StringBuilder movieIds=new StringBuilder();
+			int id = key.getClusterID();
+
+
+			ClusterCenter newCentre = new ClusterCenter(id);
 			float count=0;
-			String movieIds="";
 			for(FVector f : values){
 				newCentre.add(f);
 				count++;
-				movieIds+=f.getId()+",";
+				movieIds.append(f.getId()).append(",");
 				//TODO prevent deserialisation issue of FVector  (Hadoop 0.21 - unstable)
 				f.clear();//https://issues.apache.org/jira/browse/HADOOP-5454
 			}
 			newCentre.divide(count);
-			context.write(newCentre, new Text(movieIds));
+			context.write(newCentre, new Text(movieIds.toString()));
 			//Test for convergence criteria
 			if (key.equals(newCentre)){
+//				GLOBAL_COUNTERS.N_CONVERGED++;
+//				GLOBAL_COUNTERS.ID_CONVERGED[id]=true;
 				context.getCounter(KMEANS_COUNTERS.CONVERGED).increment(1);
 			}
+
 		}
 	}
 
-	public static int runIMDB(String[] args, int iteration, final int REDUCERS, final int K) 
+	public static long runIMDB(String[] args, int iteration, final int REDUCERS, final int K) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
 		//Save params
@@ -118,7 +126,7 @@ public class KMeans{
 		conf.set("TYPE", "IMDB");
 		conf.set("mapred.textoutputformat.separator", "!");
 		conf.set("key.value.separator.in.input.line", "!");
-		
+
 		Job job = new Job(conf, "k-Means-IMDB"+iteration);
 		//metrics
 		job.setNumReduceTasks(REDUCERS);
@@ -138,11 +146,10 @@ public class KMeans{
 		//save the number of iterations
 		GLOBAL_COUNTERS.ITERATIONS_IMDB++;
 		//return number of converged centers
-		return (job.waitForCompletion(true) ? 
-				(int)job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
+		return (job.waitForCompletion(true) ? job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
 	}
-	
-	public static int runNetflix(String[] args, int iteration, final int REDUCERS, final int K) 
+
+	public static long runNetflix(String[] args, int iteration, final int REDUCERS, final int K) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
 		//Save params
@@ -151,7 +158,7 @@ public class KMeans{
 		conf.set("TYPE", "Netflix");
 		conf.set("mapred.textoutputformat.separator", "!");
 		conf.set("key.value.separator.in.input.line", "!");
-		
+
 		Job job = new Job(conf, "kMeans-Netflix-"+iteration);
 		//metrics
 		job.setNumReduceTasks(REDUCERS);
@@ -166,12 +173,11 @@ public class KMeans{
 		job.setOutputValueClass(Text.class);  
 		job.setInputFormatClass(TextInputFormat.class);
 		//IO
-		FileInputFormat.addInputPaths(job, args[0]+"/V0");
+		FileInputFormat.addInputPaths(job, args[2]+"/V0");
 		FileOutputFormat.setOutputPath(job, new Path(args[2]+"/clusterNetflix"+(iteration+1)));
 		//save the number of iterations
 		GLOBAL_COUNTERS.ITERATIONS_NETFLIX++;
 		//return number of converged centers
-		return (job.waitForCompletion(true) ? 
-				(int)job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
+		return (job.waitForCompletion(true) ? job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
 	}
 }

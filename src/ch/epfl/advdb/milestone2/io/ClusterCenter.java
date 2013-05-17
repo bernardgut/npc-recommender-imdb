@@ -90,11 +90,11 @@ public class ClusterCenter extends TreeMap<Integer,Float> implements
 	 */
 	@Override
 	public String toString() {
-		String p=String.valueOf(clusterID)+":";
+		StringBuilder out =new StringBuilder().append(clusterID).append(":");
 		for (Entry<Integer, Float> e : this.entrySet()){
-			p+=e.getKey().toString()+","+e.getValue().toString()+";";
+			out.append(e.getKey()).append(",").append(e.getValue()).append(";");
 		}
-		return p;
+		return out.toString();
 	}
 	
 	/**
@@ -134,6 +134,7 @@ public class ClusterCenter extends TreeMap<Integer,Float> implements
 	 * @param count float precision denominator
 	 */
 	public void divide(float count) {
+		if(count==0) throw new IllegalArgumentException("divide by 0");
 		for(Entry<Integer,Float> e : this.entrySet()){
 			this.put(e.getKey(), e.getValue()/count);
 		}

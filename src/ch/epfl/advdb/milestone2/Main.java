@@ -3,17 +3,20 @@
  */
 package ch.epfl.advdb.milestone2;
 
+import ch.epfl.advdb.milestone2.counters.GLOBAL_COUNTERS;
+import ch.epfl.advdb.milestone2.io.Fetchers;
+
 /**
  * 
  * @author Bernard Gütermann
  *
  */
 public class Main {
-	final static int K = 4;
-	final static int REDUCERS = 2;
-	final static int USERS = 190152;
-	final static int DIMENSIONS = 10;
-	final static int T = 2;
+	public final static int K = 44;
+	public final static int REDUCERS = 44;
+	public final static int USERS = 478867;
+	public final static int DIMENSIONS = 10;
+	public final static int T = 0;
 	/**
 	 * Main
 	 * @param args <input folder> <output folder> 
@@ -23,45 +26,52 @@ public class Main {
 		
 		//TRAIN PHASE
 		System.out.println("################## TRAIN ################");
-		int convCount=0;
 		int i = 0;
+//		GLOBAL_COUNTERS.ID_CONVERGED= new boolean[K];
+//		GLOBAL_COUNTERS.N_CONVERGED=0;
 		//KMEAN IMDB
 		System.out.println("######## SEEDS ########");		
-		if(KSeeds.runRandom(args, K, "IMDB")==-1) 
+		if(KSeeds.runKpp(args, K, "IMDB")==-1) 
 			printAndQuit("K-Seeds");
 		System.out.println("######## END SEEDS########");	
 		
 		System.out.println("######## STARTING K MEANS IMDB ########");	
-		while (convCount<K && i<10){
+		long count = 0;
+		while (count<K && i<10){
 			System.out.println("######## IMDB : ITERATION "+i+" ########");	
-			convCount=KMeans.runIMDB(args, i, REDUCERS, K);
-			if(convCount==-1) printAndQuit("KMeans imdb iteration "+i);
+			count = KMeans.runIMDB(args, i, REDUCERS, K);
+			if(count==-1) 
+				printAndQuit("KMeans imdb iteration "+i);
 			
-			System.out.println("##### STATS for iteration "+i+" #####");
-			System.out.println("Converged centroids :"+convCount);
+			System.out.println("####### STATS for iteration "+i+" #######");
+			System.out.println("Converged centroids :"+count);
 			System.out.println("###################################");
 			++i;
 		}
 		System.out.println("######## END K MEANS IMDB ########");	
 
 		//KMEAN NETFLIX
-		convCount=0;
 		i=0;
+//		GLOBAL_COUNTERS.ID_CONVERGED= new boolean[K];
+//		GLOBAL_COUNTERS.N_CONVERGED=0;
 		System.out.println("######## V-Formatting ########");		
-		if(VFormating.run(args, REDUCERS)==-1) printAndQuit("K-Seeds");
+		if(VFormating.run(args, REDUCERS)==-1) 
+			printAndQuit("K-Seeds");
 		
 		System.out.println("########## SEEDS ##########");		
-		if(KSeeds.runRandom(args, K, "Netflix")==-1) 
+		if(KSeeds.runKpp(args, K, "Netflix")==-1) 
 			printAndQuit("K-Seeds");
 		
 		System.out.println("######## STARTING K MEANS : NETFLIX ########");	
-		while (convCount<K && i<10){
+		count =0;
+		while (count<K && i<10){
 			System.out.println("######## NF ITERATION "+i+" ########");	
-			convCount=KMeans.runNetflix(args, i, REDUCERS, K);
-			if(convCount==-1) printAndQuit("KMeans netflix iteration "+i);
+			count = KMeans.runNetflix(args, i, REDUCERS, K);
+			if(count==-1)
+				printAndQuit("KMeans netflix iteration "+i);
 			
 			System.out.println("##### STATS for iteration "+i+" #####");
-			System.out.println("Converged centroids :"+convCount);
+			System.out.println("Converged centroids :"+count);
 			System.out.println("###################################");
 			++i;
 		}
@@ -83,6 +93,12 @@ public class Main {
 		System.out.println("########## COMPUTE FSCORE ##########");	
 		if(FScore.run(args, REDUCERS, T)==-1)
 			printAndQuit("FScore");
+		
+		System.out.println("########## AVERAGE FSCORE ##########");	
+		double m = Fetchers.fetchFScoreMean(args);
+		if (m==-1) printAndQuit("fetchFScore");
+		System.out.println("AFS = "+m);
+		
 	}
 
 	private static void printAndQuit(String string) {
