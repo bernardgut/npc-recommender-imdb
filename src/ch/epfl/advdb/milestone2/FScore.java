@@ -39,7 +39,7 @@ public class FScore {
 			String l[] = value.toString().split(",");
 			StringBuilder out = new StringBuilder().append("RES:");
 			for(int i = 1; i< l.length ;++i)
-				out.append(l[i]);
+				out.append(l[i]).append(",");
 			context.write(new IntWritable(Integer.valueOf(l[0])), new Text(out.toString()));
 		}
 		
@@ -54,7 +54,7 @@ public class FScore {
 		protected void map(LongWritable key, Text value, Context context)
 				throws IOException, InterruptedException {
 			String l[] = value.toString().split(",");
-			context.write(new IntWritable(Integer.valueOf(l[1])), new Text("RAT"+l[0]+","+l[2]));
+			context.write(new IntWritable(Integer.valueOf(l[1])), new Text("RAT:"+l[0]+","+l[2]));
 		}
 	}
 	
