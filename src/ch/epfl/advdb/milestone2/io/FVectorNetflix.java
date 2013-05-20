@@ -1,5 +1,5 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2.io;
 
@@ -8,48 +8,30 @@ import java.util.Collection;
 import org.apache.hadoop.io.Text;
 
 /**
- * @author mint05
+ * This Class represents a Netflix Feature Vector. 
+ * The valeus stored are the 10 scores values, one for each dimension
+ * @author Bernard Gütermann
  *
  */
 public class FVectorNetflix extends FVector {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 2319152078419860556L;
 
-	/**
-	 * 
-	 */
 	public FVectorNetflix() {
 	}
 
-	/**
-	 * @param movieID
-	 */
 	public FVectorNetflix(int movieID) {
 		super(movieID);
 	}
 
-	/**
-	 * @param initialCapacity
-	 * @param movieID
-	 */
 	public FVectorNetflix(int initialCapacity, int movieID) {
 		super(initialCapacity, movieID);
 	}
 
-	/**
-	 * @param c
-	 * @param movieID
-	 */
 	public FVectorNetflix(Collection<? extends Float> c, int movieID) {
 		super(c, movieID);
 	}
 
-	/**
-	 * @param value
-	 */
 	public FVectorNetflix(Text value) {
 		super(value);
 	}

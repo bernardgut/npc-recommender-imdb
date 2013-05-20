@@ -1,5 +1,5 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2.io;
 
@@ -13,7 +13,10 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 /**
- * @author mint05
+ * This abstract class represents a feature vector
+ * Feature Vectors must override the getDistance function
+ * It is built over an ArrayList of Float values
+ * @author Bernard Gütermann
  *
  */
 public abstract class FVector extends ArrayList<Float> implements

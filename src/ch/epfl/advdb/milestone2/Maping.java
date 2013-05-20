@@ -1,5 +1,5 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2;
 
@@ -17,11 +17,21 @@ import ch.epfl.advdb.milestone2.io.Fetchers;
 import ch.epfl.advdb.milestone2.io.Pair;
 
 /**
+ * This Class contains the functions associated with the Mapping between the IMDB and Netflix 
+ * clusters
  * @author Bernard Gütermann
  *
  */
 public class Maping {
 	
+	/**
+	 * Retrieve the outputs of the k means algorithm for bot IMDB and Netflix and performs 
+	 * a 1:1 mapping between the K IMDB and the K Netflix clusters. 
+	 * @param args input path for the train/test sets and the output
+	 * @param K the number of cluster centroids used in this run of K-Means
+	 * @return 0 if success
+	 * @throws IOException
+	 */
 	public static int run(String[] args, final int K) throws IOException{
 		//LOAD CENTROIDS
 		Configuration c = new Configuration();
@@ -53,8 +63,11 @@ public class Maping {
 	}
 
 	/**
-	 * 
-	 * @param associations
+	 * writes to disk the mappings in a sequence of <I,J> where I is a clusterID for IMDB
+	 * and J for Netflix
+	 * @param args input path for the train/test sets and the output
+	 * @param associations the set of Pairs representing the mappings
+	 * @return 0 if success
 	 */
 	private static int writeToDisk(
 			String[] args, ArrayList<Pair<Integer, Integer>> associations) {
@@ -80,9 +93,9 @@ public class Maping {
 	}
 	
 	/**
-	 * 
-	 * @param y1
-	 * @param y2
+	 * Computes the jacquard similarity between two strings representing set of integers. 
+	 * @param y1 input set of the form "v1,v2,v3,v4,..,vn"
+	 * @param y2 input set of the form "v1,v2,v3,v4,..,vn"
 	 * @return
 	 */
 	private static double jaccardSimilarity(String y1, String y2) {

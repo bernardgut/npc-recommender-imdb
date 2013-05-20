@@ -1,10 +1,9 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.hadoop.conf.Configuration;
@@ -15,16 +14,14 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import ch.epfl.advdb.milestone2.io.Fetchers;
-
 /**
+ * Computes the F-Score for the output set.
+ * NOT USED IN THE HANDOUT
  * @author Bernard Gütermann
- *
  */
 public class FScore {
 	
@@ -100,20 +97,21 @@ public class FScore {
 			
 			//keep only the users that have a rating in the original netflix set
 			resultSet.retainAll(userSet);
-			System.out.println("FScore for movie "+arg0.get()+", result size : "+resultSet.size()
-					+", total relvant size : "+relevantSet.size());
 			
 			//intersection
 			double relevantSize = relevantSet.size();
 			relevantSet.retainAll(resultSet);
 			double n = relevantSet.size();	//intersection set size
 			//recall
-			double recall = n/relevantSize;
+			double recall = 0;
+			if (!(relevantSize==0))
+				recall = n/relevantSize;
 			//precision
-			double precision = n/resultSet.size();
+			double precision = 0;
+			if (!(resultSet.size()==0))
+				precision = n/resultSet.size();
 			//fscore
 			double fscore = 2/((1/recall)+(1/precision));
-			System.out.println("\tn size "+n+" ;Recall: "+recall+" ; Precision: " +precision+";FScore: "+fscore);
 			context.write(arg0, new Text(recall+","+precision+","+fscore));
 		}
 	}

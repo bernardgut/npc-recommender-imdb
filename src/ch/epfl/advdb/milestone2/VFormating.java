@@ -1,3 +1,6 @@
+/*
+ * BERNARD GUTERMANN (c) 2013
+ */
 package ch.epfl.advdb.milestone2;
 
 import java.io.IOException;
@@ -16,7 +19,21 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+/**
+ * This Class contains the Hadoop task that preprocess the V Matrix of the Netflix dataset so that 
+ * it is usable with the KMeans.class implementation of K means.
+ * @author Bernard Gütermann
+ *
+ */
 public class VFormating {
+	
+	/**
+	 * MAP : 
+	 * Input file is V, in the form of a sequence file of <V,d,m,v> where d\ in [0,10] is 
+	 * the dimension, m is the movieID and v is the associated value. The map task reads one 
+	 * line of V input and emits the movieID as key the tuple with the <userid, rating> as value.
+	 * @author Bernard Gütermann
+	 */
 	public static class VFMapper extends Mapper<LongWritable, Text, IntWritable, Text>{
 
 		/* (non-Javadoc)
@@ -32,6 +49,13 @@ public class VFormating {
 		}
 	}
 	
+	/**
+	 * REDUCE : 
+	 * Input is a movieID along with all it's associated ratings in the V matrix, 
+	 * Output is a sequence file comprising of lines where the ratings are ordered 
+	 * according to the dimension order: <m, v1, v2, ... , v10>.
+	 * @author Bernard Gütermann
+	 */
 	public static class VFReducer extends Reducer<IntWritable, Text, Text, NullWritable>{
 
 		/* (non-Javadoc)
@@ -54,7 +78,17 @@ public class VFormating {
 		}
 	}
 	
-	public static long run(String[] args, final int REDUCERS) 
+	/**
+	 * Run a Hadoop task for the K-Means algorithm for the VFormating of the V matrix output
+	 * of collaborative filtering. The output is stored in <output>/V0
+	 * @param args input path for the train/test sets and the output
+	 * @param REDUCERS the number of reducers assigned to this hadoop task
+	 * @return 0 if success
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
+	public static int run(String[] args, final int REDUCERS) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
 		//Save params

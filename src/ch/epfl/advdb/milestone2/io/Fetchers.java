@@ -1,5 +1,5 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2.io;
 
@@ -14,13 +14,18 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-/**
+/** This Class contains all necessary functions to perform IO from DFS fileSystem.
  * @author Bernard Gütermann
  *
  */
 public class Fetchers {
 
-
+	/**
+	 * fetch an array of cluster centroids from filesystem. the array is ordered by clusterID
+	 * @param c configuration
+	 * @return ordered array of cluster centroids
+	 * @throws IOException
+	 */
 	public static ClusterCenter[] fetchCenters(Configuration c) throws IOException {
 		ClusterCenter[] clusterCentroids = new ClusterCenter[c.getInt("K", 0)];
 		FileSystem fs = FileSystem.get(c);
@@ -55,16 +60,22 @@ public class Fetchers {
 				br.close();
 			}
 		}
-		System.out.println("Centers Fetched : "+count );
 		return clusterCentroids;
 	}
 
+	/**
+	 * fetch the clustercenters, along with their clusters, form disk
+	 * @param c configuration
+	 * @return a table containing pairs where each cluster centroid is associated with a string containing
+	 * the set of movieID associated with this clusterCentroid
+	 * @throws IOException
+	 */
 	public static Pair<ClusterCenter, String>[] fetchClusters(Configuration c) throws IOException {
 		Pair<ClusterCenter, String>[] clusters = new  Pair[c.getInt("K", 0)];
 		FileSystem fs = FileSystem.get(c);
 		FileStatus[] status = fs.listStatus(new Path(c.get("CPATH")));  
 		//For each correponding file
-		assert (status.length!=0) : "fetchCenters : Invalid CPATH";
+		if (status.length==0) throw new IOException("Invalid CPATH :"+c.get("CPATH"));
 		for (int i=0;i<status.length;i++)
 		{
 			String fileName[] = status[i].getPath().toString().split("/");
@@ -102,12 +113,18 @@ public class Fetchers {
 		return clusters;
 	}
 
+	/**
+	 * fetch the mappings between clusters from disk
+	 * @param c configuration
+	 * @return a HashMap where keys are IMDB clusterID and values are Netflix clusterID
+	 * @throws IOException
+	 */
 	public static HashMap<Integer, Integer> fetchMappings(Configuration c) throws IOException {
 		HashMap<Integer, Integer> out = new HashMap<Integer,Integer>();
 		FileSystem fs = FileSystem.get(c);
 		FileStatus[] status = fs.listStatus(new Path(c.get("CPATH")));  
 		//For each correponding file
-		assert (status.length!=0) : "fetchMappings : Invalid CPATH";
+		if (status.length==0) throw new IOException("Invalid CPATH :"+c.get("CPATH"));
 		for (int i=0;i<status.length;i++)
 		{
 			String fileName[] = status[i].getPath().toString().split("/");
@@ -127,10 +144,17 @@ public class Fetchers {
 		return out;
 	}
 
+	/**
+	 * fetch the U matrix from disk
+	 * @param c
+	 * @return the U matrix in a 2D array
+	 * @throws IOException
+	 */
 	public static double[][] fetchUMatrix(Configuration c) throws IOException{
 		double[][] matrix = new double[Integer.valueOf(c.get("USERS"))][Integer.valueOf(c.get("DIMENSIONS"))];
 		FileSystem fs = FileSystem.get(c);
 		FileStatus[] status = fs.listStatus(new Path(c.get("UPATH")));  
+		if (status.length==0) throw new IOException("Invalid UPATH :"+c.get("UPATH"));
 		//For all files
 		for (int i=0;i<status.length;i++){
 			String fileName[] = status[i].getPath().toString().split("/");
@@ -152,13 +176,20 @@ public class Fetchers {
 		return matrix;
 	}
 
+	/**
+	 * fetch the results from the Recommander
+	 * NOT USED IN THE FINAL VERSION
+	 * @param c
+	 * @return for each test movieID, the set of userID that might enjoy that movie
+	 * @throws IOException
+	 */
 	public static HashMap<Integer, HashSet<Integer>> fetchResults(
 			Configuration c) throws IOException {
 		HashMap<Integer, HashSet<Integer>>  out = new HashMap<Integer, HashSet<Integer>> ();
 		FileSystem fs = FileSystem.get(c);
 		FileStatus[] status = fs.listStatus(new Path(c.get("CPATH")));  
 		//For each correponding file
-		assert (status.length!=0) : "fetchMappings : Invalid CPATH";
+		if (status.length==0) throw new IOException("Invalid CPATH :"+c.get("CPATH"));
 		for (int i=0;i<status.length;i++)
 		{
 			String fileName[] = status[i].getPath().toString().split("/");
@@ -182,6 +213,12 @@ public class Fetchers {
 		return out;
 	}
 
+	/**
+	 * compute the mean FScore from each test movie FScore
+	 * NOT USER IN FINAL VERSION
+	 * @param args
+	 * @return the average FSCORE 
+	 */
 	public static double fetchFScoreMean(String[] args){
 		double mean = 0;
 		double count = 0;

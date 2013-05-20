@@ -1,9 +1,9 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2.io;
 
-/**
+/**This Class represents a tuple of two elementss
  * @author Bernard Gütermann
  *
  */

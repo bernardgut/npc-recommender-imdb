@@ -1,5 +1,5 @@
-/**
- * 
+/*
+ * BERNARD GUTERMANN (c) 2013
  */
 package ch.epfl.advdb.milestone2;
 
@@ -24,21 +24,30 @@ import ch.epfl.advdb.milestone2.io.FVectorIMDB;
 import ch.epfl.advdb.milestone2.io.FVectorNetflix;
 import ch.epfl.advdb.milestone2.io.Fetchers;
 
-/**
+/** Class containing the Hadoop K Means Algorithm for both IMDB and Netflix datasets.
  * @author Bernard Gütermann
- *
  */
 public class KMeans{
 
 	/**
-	 * Map : For a given feature vector, Find closest centroid 
-	 * @author mint05
+	 * Map : 
+	 * During the setup phase, the set of cluster centroids of previous iteration 
+	 * (or seeds if it is the first iteration) is stored locally at each map worker so that
+	 *  it is accessible throughout the map tasks. 
+	 *  Input file is the movie features of Netflix, resp. IMDB. This input does not change 
+	 *  throughout the iterations. The map task reads one feature vector. For this feature vector, 
+	 *  it then compares sequentially to all K cluster centroids stored in the local memory, 
+	 *  and emits the closest centroid as key, with the feature vector as value. 
+	 * @author Bernard Gütermann
 	 *
 	 */
 	public static class KmeansMapper extends Mapper<LongWritable, Text, ClusterCenter,FVector>{
 
 		ClusterCenter[] clusterCentroids;
 
+		/**
+		 * Load the set of cluster centroids from previous iteration into the local memory
+		 */
 		@Override
 		protected void setup(Context context)
 				throws IOException, InterruptedException {
@@ -83,6 +92,14 @@ public class KMeans{
 		}
 	}
 
+	/**
+	 * Reduce :
+	 * Input is a cluster centroid along with all feature vectors that had this centroid as the closest. 
+	 * The reduce task then computes the new centroid for the feature vectors input. 
+	 * If the new centroid is the same as the input, we say that the centroid has converged. 
+	 * If this is the case, the reduce task increment a CONVERGED enum that all reduce tasks can access.
+	 * @author Bernard Gütermann
+	 */
 	public static class KmeansReducer extends Reducer<ClusterCenter,FVector,ClusterCenter, Text>{
 
 		/*
@@ -109,14 +126,23 @@ public class KMeans{
 			context.write(newCentre, new Text(movieIds.toString()));
 			//Test for convergence criteria
 			if (key.equals(newCentre)){
-//				GLOBAL_COUNTERS.N_CONVERGED++;
-//				GLOBAL_COUNTERS.ID_CONVERGED[id]=true;
 				context.getCounter(KMEANS_COUNTERS.CONVERGED).increment(1);
 			}
 
 		}
 	}
 
+	/**
+	 * Run a Hadoop task for the K-Means algorithm for the IMDB dataset
+	 * @param args input path for the train/test sets and the output
+	 * @param iteration the current iteration
+	 * @param REDUCERS the number of reducers assigned to this hadoop task
+	 * @param K the number of cluster centroids used in this run of K-Means
+	 * @return the number of converged centroids after this iteration, or -1 if failure
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
 	public static long runIMDB(String[] args, int iteration, final int REDUCERS, final int K) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();
@@ -149,6 +175,17 @@ public class KMeans{
 		return (job.waitForCompletion(true) ? job.getCounters().findCounter(KMEANS_COUNTERS.CONVERGED).getValue() : -1);
 	}
 
+	/**
+	 * Run a Hadoop task for the K-Means algorithm for the Netflix dataset
+	 * @param args input path for the train/test sets and the output
+	 * @param iteration the current iteration
+	 * @param REDUCERS the number of reducers assigned to this hadoop task
+	 * @param K the number of cluster centroids used in this run of K-Means
+	 * @return the number of converged centroids after this iteration, or -1 if failure
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws InterruptedException
+	 */
 	public static long runNetflix(String[] args, int iteration, final int REDUCERS, final int K) 
 			throws IOException, ClassNotFoundException, InterruptedException{
 		Configuration conf = new Configuration();

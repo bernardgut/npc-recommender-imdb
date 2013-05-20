@@ -18,13 +18,27 @@ import ch.epfl.advdb.milestone2.io.FVectorIMDB;
 import ch.epfl.advdb.milestone2.io.FVectorNetflix;
 
 /**
- * 
+ * Class containing functions to generate the K-Means seeds based on the 
+ * input set of features
  * @author Bernard Gütermann
  *
  */
 public class KSeeds {
+	
 	static String newLine = System.getProperty("line.separator"); 
 
+	/**
+	 * generate seeds using a custom version of K++ algorithm. The seeds are generated using 
+	 * the following scheme : 
+	 * 1. Take a random feature point and add it as seed
+	 * 2. Take the point that has the largest cumulated distance with the set of points in the seeds
+	 * 3. Add this point to the set of seed. 
+	 * 4. execute step 2 and 3 until K seeds have been chosen
+	 * @param args The args input table containing the path to the train set
+	 * @param K The number of seeds to be generated
+	 * @param type "IMDB" or "Netflix" so that the function handle genericity
+	 * @return 0 if success, -1 otherwise
+	 */
 	public static int runKpp(String[] args, final int K, String type){
 		Path ip;
 		Path op;
@@ -47,7 +61,6 @@ public class KSeeds {
 		try {
 			fs  = FileSystem.get(c);
 			status = fs.listStatus(ip);
-			//For each correponding file
 			for (int i=0;i<status.length;i++)
 			{
 				String fileName[] = status[i].getPath().toString().split("/");
@@ -56,7 +69,6 @@ public class KSeeds {
 					BufferedReader br=new BufferedReader(
 							new InputStreamReader(fs.open(status[i].getPath())));
 					String line=br.readLine();
-					//for each line
 					while (line != null)
 					{
 						if(line.split(",").length>1){
@@ -66,7 +78,8 @@ public class KSeeds {
 							}else if (type.equals("Netflix")){
 								v = new FVectorNetflix(line);
 							}else return -1;
-							f.add(v);
+							if (!f.contains(v))
+								f.add(v);
 						}
 						line = br.readLine();
 					}
@@ -78,7 +91,6 @@ public class KSeeds {
 			e.printStackTrace();
 			return -1;
 		}  
-
 		//KMeans++
 		Random r = new Random();
 		ArrayList<FVector> seeds = new ArrayList<FVector>();
@@ -132,7 +144,13 @@ public class KSeeds {
 		return 0;
 	}
 
-
+	/**
+	 * Generate K seeds by taking randomly K vectors in the input set
+	 * @param args The args input table containing the path to the train set
+	 * @param K The number of seeds to be generated
+	 * @param type "IMDB" or "Netflix" so that the function handle genericity
+	 * @return 0 if success, -1 otherwise
+	 */
 	public static int runRandom(String[] args, final int K, String type){
 		Path ip;
 		Path op;
@@ -154,7 +172,6 @@ public class KSeeds {
 		try {
 			fs  = FileSystem.get(c);
 			status = fs.listStatus(ip);
-			//For each correponding file
 			for (int i=0;i<status.length;i++)
 			{
 				String fileName[] = status[i].getPath().toString().split("/");

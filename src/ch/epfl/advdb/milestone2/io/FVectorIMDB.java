@@ -1,14 +1,20 @@
+/*
+ * BERNARD GUTERMANN (c) 2013
+ */
 package ch.epfl.advdb.milestone2.io;
 
 import java.util.Collection;
 
 import org.apache.hadoop.io.Text;
 
+/**
+ * This class represents an IMDB feature vector
+ * the values stored are the indexes where the binary feature vector has "1"s
+ * @author mint05
+ *
+ */
 public class FVectorIMDB extends FVector{
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3285319392520018214L;
 
 	public FVectorIMDB() {

@@ -1,3 +1,6 @@
+/*
+ * BERNARD GUTERMANN (c) 2013
+ */
 package ch.epfl.advdb.milestone2.io;
 
 import java.io.DataInput;
@@ -10,6 +13,13 @@ import java.util.TreeMap;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
+/**
+ * This abstraction represents a Cluster Centroid. It is used for both IMDB and Netflix cluster
+ * centroids. It uses an underlying TreeMap structure to maintain order in the dimensions. This is to
+ * ensure that the overriden compareTo function works flawlessly
+ * @author Bernad Gütermann
+ *
+ */
 public class ClusterCenter extends TreeMap<Integer,Float> implements
 		WritableComparable<ClusterCenter> {
 
