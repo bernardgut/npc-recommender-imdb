@@ -1,16 +1,16 @@
-recommander_imdb
+Recommander_imdb
 ===========
 
 Map-Reduce implementation of a recommander system using a content based approach on the outputs of previous collaborative filtering
 
-# Introduction
+## Introduction
 
 The goal of this repo is to extend the recommendation system for the Netflix prize challenge described in the "recommander" repo. We implement a clustering algorithm using Hadoop [2](an open-source MapReduce implementation). In order to build recommandation efficiently, we use a cluster of 88 worker nodes. 
 using Hadoop (an open-source MapReduce  implementation). The Netflix Prize was an open competition for implementing the best collaborative filtering algorithm for recommending movies to subscribed users. The grand prize of one million dollars was given to the winning team. For more information about the Netflix prize see
 http://en.wikipedia.org/wiki/Netflix_Prize.
 
 
-# Description
+## Description
 
 We build a recommender system that given a new movie, return a list of users that might enjoy watching that movie.
 
@@ -19,13 +19,13 @@ Finally, when given a new (test) movie, along with its set of IMDB features, the
 
 The goal of the process is to maximize the F-score associated with the list of users returned for a new (test set) movie. We define F-score as 1 / [1/Recall+1/Precision]. The F-score is computed based only on the users that have ratings associated with the test movie in the original Netflix dataset.
 
-## Clustering Algorithm 
+### Clustering Algorithm 
 
 K-MEANS : Given a set of points in a n-dimensional space, a clustering algorithm is to find k center points (centroids) that minimize the distance between each point and its closest centroid. For more information read chapter 7 of the “Mining Massive Datasets” textbook [1].
 
-## Inputs
+### Inputs
 
-### The IMDB Dataset
+#### The IMDB Dataset
 
 The IMDB dataset consists of a list of movies, each on a separate line, and for every movie we are given a list of feature ids for which this movie has value 1. For example, you can think of a feature being 1 as signaling that the movie has a specific actor starring in it or it was written by a specific screenwriter. The cluster ClusterIMDB is constructed based on the cosine distance between the feature vectors of different movies.
 
@@ -34,18 +34,18 @@ features 1, 4 and 6, and movie 2 has features 3, 7 and 8.
 1, 1, 4, 6
 2, 3, 7, 8
 
-###  The (U,V) decomposition dataset
+####  The (U,V) decomposition dataset
 
 We give the U and V matrices resulting from the (U,V) decomposition of the Netflix dataset P of the previous milestone (see "recommander" repo from same user). The dimensions of the U and V matrices are (number-of-users x 10) and (10 x number-of-movies).
 The format of the U and V matrices is 
-<U, userID, [1..10], value> and
-<V, [1..10], movieID, value>
+\<U, userID, [1..10], value\> and
+\<V, [1..10], movieID, value\>
 
 We will consider that column j of V represents the profile of movie j (with 10 features) and the
 cluster ClusterNetflix will be constructed based on the cosine distance between these profile-
 vectors.
 
-### Inputs/Outputs
+#### Inputs/Outputs
 
 We provide a small input dataset in order to allow for local-machine test (cluster development dataset is not suitable for github, due to size concerns). Input directory contains README file with dataset information (e.g. number of users, movies, etc.). The input dataset is divided into training and test datasets, which should both reside on HDFS.
 (/std11/input/train/ and /std11/input/test/).
@@ -55,15 +55,16 @@ The system output for each test movie a set of users that might enjoy that movie
 
 movie_id, user_id, ... , user_id
 
-# Disclaimer
+## Disclaimer
 Don’t expect great response times. Hadoop is always a bit sluggish – even if the system is not heavily loaded, it is not strikingly efficient, which is annoying for small and simple jobs, but it is scalable. Don't be frustrated about the Hadoop performance, it's not necessarily a problem in the code.
 
 
-# References
+## References
 [1] Mining of Massive Datasets -Anand Rajaraman (Kosmix, Inc). Jeffrey D. Ullman (Stanford Univ).
-[2] Google
 
-# Note on our Runtime Environment
+[2] Google MapReduce Paper
+
+## Note on our Runtime Environment
 Our cluster has four blades and it runs a virtualized Solaris-based environment with 96 hardware threads (~=cores). Four nodes are designated gateways dedicated for communication with the outside world (called “global zones” on Solaris), i.e. they are visible globally and can be connected to via ssh. These nodes are called **** (edited). Each global zone manages a blade and shares memory and I/O with 22 "local zones". These
 are virtual machines that each have a hardware thread exclusively assigned to them -- so work
 can run on each of these local zones in parallel. The names of these zones have the following
@@ -71,6 +72,7 @@ format: ******* (edited). Each local zone has 2GB of RAM assigned to it. Hadoop 
 http://******/(namenode)
 http://******/(jobtracker)
 Data is stored on HDFS, Hadoop's distributed and replicated file system.
+
 
 A tutorial for writing MapReduce programs in Hadoop can be found on:
 http://hadoop.apache.org/docs/r1.1.1/mapred_tutorial.html
