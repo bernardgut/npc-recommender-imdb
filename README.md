@@ -55,7 +55,7 @@ The system output for each test movie a set of users that might enjoy that movie
 
 movie_id, user_id, ... , user_id
 
-## NOTES
+## Notes
 Don’t expect great response times. Hadoop is always a bit sluggish – even if the system is not heavily loaded, it is not strikingly efficient, which is annoying for small and simple jobs, but it is scalable. Don't be frustrated about the Hadoop performance, it's not necessarily a problem in the code.
 
 The Hadoop distribution used throughout this project is Apache Hadoop 0.21 
