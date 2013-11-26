@@ -1,7 +1,7 @@
-Recommander_imdb
+IMDB Recommandations building tool on MapReduce
 ===========
 
-Map-Reduce implementation of a recommander system using a content based approach on the outputs of previous collaborative filtering
+Map-Reduce implementation that aim at building movie recommandations to users. For this, we use a content based approach on a IMDB movie set, and a preprocessed dataset of users clustered by similarity (on the dataset of NETFLIX users). This is the second step of the process of building recommandations for users. The goal is that the final system (afetr computations) will be able to instantly output a set of movies that a given user is likely to like. In order to see that we use collaborative filtering on the set of users (Netflix dataset of users), then apply content based approach to link user clusters with movies. See the "bernardgut/recommander" repo for the Collaborative filtering part.
 
 ## Introduction
 
